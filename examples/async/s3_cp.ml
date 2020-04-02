@@ -78,9 +78,9 @@ module Compat = struct
             if is_hex(String.get s (i+1)) && is_hex(String.get s (i+2)) then
               Buffer.add_char buf c
             else
-              Buffer.add_bytes buf "%25"
+              Buffer.add_bytes buf (Bytes.of_string "%25")
         end
-      | _ -> Buffer.add_bytes buf (Printf.sprintf "%%%X" (Char.to_int c))
+      | _ -> Buffer.add_bytes buf (Bytes.of_string (Printf.sprintf "%%%X" (Char.to_int c)))
     done;
     Buffer.contents buf
 
@@ -108,7 +108,7 @@ module Compat = struct
        URI.encoded_of_query encodes [""] as ?a=, and [] as ?a.
     *)
     Uri.query uri
-    |> List.sort ~cmp:ksrt
+    |> List.sort ~compare:ksrt
     |> List.map
       ~f:(fun (k,v) -> (k, match v with [] -> [""] | x -> x))
     |> Uri.encoded_of_query
@@ -212,7 +212,7 @@ module Auth = struct
     (* Sort query string in alphabetical order by key *)
     let canonical_query = Compat.encode_query_string uri in
     let sorted_headers = Header.to_list request.headers
-                         |> List.sort ~cmp:ksrt in
+                         |> List.sort ~compare:ksrt in
     let canonical_headers = sorted_headers
                             |> List.fold ~init:"" ~f:(fun acc (k,v) ->
                                 acc ^
@@ -376,9 +376,9 @@ let run region_str aws_access_key aws_secret_key src dst () =
     end
 
 let () =
-  Command.async
+  Async.Command.async_spec
     ~summary:"Simple command line client that copies files to/from S3"
-    Command.Spec.(empty
+    Async.Command.Spec.(empty
                   +> flag "-r" (optional_with_default "us-east-1" string)
                     ~doc:"string AWS Region"
                   +> anon ("aws_access_key" %: string)
@@ -386,4 +386,4 @@ let () =
                   +> anon ("src" %: string)
                   +> anon ("dst" %: string)
                  ) run
-  |> Command.run
+  |> Async.Command.run

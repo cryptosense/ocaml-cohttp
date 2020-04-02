@@ -1,6 +1,11 @@
 (executables
   (names     hello_world receive_post)
-  (libraries cohttp-async base async_kernel))
+  (libraries
+    async_kernel
+    cohttp-async
+    base
+    cstruct
+    nocrypto))
 
 (alias
   (name    runtest)
